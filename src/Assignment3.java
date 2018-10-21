@@ -1,6 +1,6 @@
 /**
- * Student Name:
- * Student Number:
+ * Student Name: Kristijan Pajtasev
+ * Student Number: 2920266
  */
 
 import java.util.concurrent.ForkJoinPool;
@@ -17,59 +17,54 @@ public class Assignment3 {
         for (int i = 0; i < ARRAY_SIZE; i++) data[i] = (int) (Math.random() * MAX_NUMBER);
 
 //        UNCOMMENT BELLOW TO PRINT INIT ARRAY
-        for(int i = 0; i < ARRAY_SIZE; i++) System.out.print(data[i] + " ");
-        System.out.println();
+//        for(int i = 0; i < ARRAY_SIZE; i++) System.out.print(data[i] + " ");
+//        System.out.println();
 
         long start = System.currentTimeMillis();
         ForkJoinPool forkJoinPool = new ForkJoinPool();
-        forkJoinPool.invoke(new Sort(data, 0, ARRAY_SIZE));
-        long end = System.currentTimeMillis();
+        forkJoinPool.invoke(new MergeSort(data, 0, ARRAY_SIZE));
+        long asynchRunningTime = System.currentTimeMillis() - start;
 
 //      UNCOMMENT BELLOW TO PRINT SORTED ARRAY
-        for(int i = 0; i < ARRAY_SIZE; i++) System.out.print(data[i] + " ");
-        System.out.println();
+//        for(int i = 0; i < ARRAY_SIZE; i++) System.out.print(data[i] + " ");
+//        System.out.println();
 
-        System.out.println("Fork pool execution time in milliseconds: " + (end - start));
+        System.out.println("Fork pool execution time in milliseconds: " + asynchRunningTime);
 
 
         // generate new unsorted data array
         for (int i = 0; i < ARRAY_SIZE; i++) data[i] = (int) (Math.random() * 100);
 
 //      UNCOMMENT BELLOW TO PRINT UNSORTED ARRAY
-        for(int i = 0; i < ARRAY_SIZE; i++) System.out.print(data[i] + " ");
-        System.out.println();
+//        for(int i = 0; i < ARRAY_SIZE; i++) System.out.print(data[i] + " ");
+//        System.out.println();
 
         start = System.currentTimeMillis();
-        mergeSort(data, 0, ARRAY_SIZE);
-        end = System.currentTimeMillis();
+        MergeSortSync.sort(data, 0, ARRAY_SIZE);
+        long synchRunningTime = System.currentTimeMillis() - start;
 
 //      UNCOMMENT BELLOW TO PRINT SORTED ARRAY
-        for(int i = 0; i < ARRAY_SIZE; i++) System.out.print(data[i] + " ");
-        System.out.println();
+//        for(int i = 0; i < ARRAY_SIZE; i++) System.out.print(data[i] + " ");
+//        System.out.println();
 
-        System.out.println("Synchronous execution time in milliseconds: " + (end - start));
+        System.out.println("Synchronous execution time in milliseconds: " + synchRunningTime);
+
+        System.out.println("Asynchronous execution is " + (synchRunningTime - asynchRunningTime) +
+                "ms faster than synchronous");
     }
-
-    static void mergeSort(int f[], int lb, int ub) {
-        // switch to insertion sort when length less than 100
-        if (ub - lb < 100) {
-            InsertionSort.sort(f, lb, ub);
-        } else {
-            int mid = (lb + ub) / 2;
-            mergeSort(f, lb, mid);
-            mergeSort(f, mid, ub);
-            MergeSortUtil.merge(f, lb, mid, ub);
-        }
-    }
-
 }
 
-class Sort extends RecursiveAction {
+/**
+ * @class MergeSort
+ * Class starting MergeSort as RecursiveAction. When array length reaches 100 or less switches to InsertionSort.
+ * Otherwise splits in two and starts new MergeSort for each of two partition.
+ */
+class MergeSort extends RecursiveAction {
     private int data[];
     private int lowerBound;
     private int upperBound;
 
-    Sort(int[] data, int lowerBound, int upperBound) {
+    MergeSort(int[] data, int lowerBound, int upperBound) {
         this.data = data;
         this.lowerBound = lowerBound;
         this.upperBound = upperBound;
@@ -81,17 +76,39 @@ class Sort extends RecursiveAction {
         if (upperBound - lowerBound < 100) {
             InsertionSort.sort(data, lowerBound, upperBound);
         } else {
-            Sort sort1 = new Sort(data, lowerBound, middle);
-            Sort sort2 = new Sort(data, middle, upperBound);
+            MergeSort sort1 = new MergeSort(data, lowerBound, middle);
+            MergeSort sort2 = new MergeSort(data, middle, upperBound);
             invokeAll(sort1, sort2);
             sort1.join();
             sort2.join();
             MergeSortUtil.merge(data, lowerBound, middle, upperBound);
         }
     }
-
 }
 
+/**
+ * @class MergeSortSync
+ * Class starting merge sort. It starts splitting array util gets to size of 100 or less. Then switches to insertion
+ * sort.
+ */
+class MergeSortSync {
+    static void sort(int f[], int lb, int ub) {
+        // switch to insertion sort when length less than 100
+        if (ub - lb < 100) {
+            InsertionSort.sort(f, lb, ub);
+        } else {
+            int mid = (lb + ub) / 2;
+            MergeSortSync.sort(f, lb, mid);
+            MergeSortSync.sort(f, mid, ub);
+            MergeSortUtil.merge(f, lb, mid, ub);
+        }
+    }
+}
+
+/**
+ * @class InsertionSort
+ * Class containing sort method. It sorts part of array between lower and upper bound using insertion sort.
+ */
 class InsertionSort {
     static void sort(int data[], int lowerBound, int upperBound) {
         for (int i = lowerBound; i < upperBound; i++) {
@@ -106,6 +123,11 @@ class InsertionSort {
     }
 }
 
+
+/**
+ * @class MergeSortUtil
+ * Class with static method merge used for building back array after splitting
+ */
 class MergeSortUtil {
     static void merge(int f[], int lb, int mid, int ub) {
         int c[] = new int[ub - lb];
