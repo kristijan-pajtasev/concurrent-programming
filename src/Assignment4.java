@@ -2,7 +2,6 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
-import java.util.concurrent.atomic.AtomicReferenceArray;
 
 /**
  * Assignment4.java
@@ -16,7 +15,7 @@ public class Assignment4 {
         // Question 1 test
         ////////////////////////////////////////////
         System.out.println("QUESTION 1 \n========================");
-        final int NUM_OF_SEATS = 5; // TODO fix num of seats and num of customers
+        final int NUM_OF_SEATS = 5;
         final int NUM_OF_CUSTOMERS = 30;
         ViewingStand viewingStand = new ViewingStand(NUM_OF_SEATS);
         Customer[] customers = new Customer[NUM_OF_CUSTOMERS];
