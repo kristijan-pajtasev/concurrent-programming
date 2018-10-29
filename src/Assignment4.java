@@ -16,8 +16,8 @@ public class Assignment4 {
         // Question 1 test
         ////////////////////////////////////////////
         System.out.println("QUESTION 1 \n========================");
-        final int NUM_OF_SEATS = 1; // TODO fix num of seats and num of customers
-        final int NUM_OF_CUSTOMERS = 1;
+        final int NUM_OF_SEATS = 5; // TODO fix num of seats and num of customers
+        final int NUM_OF_CUSTOMERS = 30;
         ViewingStand viewingStand = new ViewingStand(NUM_OF_SEATS);
         Customer[] customers = new Customer[NUM_OF_CUSTOMERS];
         for (int i = 0; i < NUM_OF_CUSTOMERS; i++) {
@@ -34,8 +34,6 @@ public class Assignment4 {
                 e.printStackTrace();
             }
         }
-
-        // TODO handle wait for all
 
         System.out.println("\n\n\n");
 
