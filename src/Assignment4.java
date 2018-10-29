@@ -252,7 +252,7 @@ class CircularQueue<T> implements Iterable<T> {
             return null;
     }
 
-    public boolean leave() {
+    boolean leave() {
         if (size.get() == 0) return false;
         else {
             setAndDecreaseCounters();
@@ -260,7 +260,7 @@ class CircularQueue<T> implements Iterable<T> {
         }
     }
 
-    public boolean full() {
+    boolean full() {
         return (size.get() == max);
     }
 
