@@ -1,10 +1,5 @@
-import sun.nio.ch.ThreadPool;
-
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
@@ -50,8 +45,51 @@ public class Assignment4 {
         System.out.println("QUESTION 2 \n========================");
 
         CircularQueue queue = new CircularQueue<String>();
-        queue.join("New string");
-        queue.join("One more string");
+
+        // intentionally more elements than queue size
+        CircularQueueConsumer[] consumers = new CircularQueueConsumer[3];
+        for(int i = 0; i < 3; i++) {
+            CircularQueueConsumer consumer = new CircularQueueConsumer(i, queue);
+            consumers[i] = consumer;
+            consumer.start();
+        }
+
+        for(int i = 0; i < 3; i++) {
+            try {
+                consumers[i].join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        System.out.println("\n\nResulted array:");
+
+        for(Object s: queue) {
+            String s1 = (String) s;
+            System.out.println(s1);
+        }
+
+
+        System.out.println("\n\n");
+
+        // intentionally more elements than queue size
+        CircularQueueRemoveConsumer[] removeConsumers = new CircularQueueRemoveConsumer[3];
+        for(int i = 0; i < 3; i++) {
+            CircularQueueRemoveConsumer consumer = new CircularQueueRemoveConsumer(i, queue);
+            removeConsumers[i] = consumer;
+            consumer.start();
+        }
+
+        for(int i = 0; i < 3; i++) {
+            try {
+                removeConsumers[i].join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        System.out.println("\n\nResulted array:");
+
         for(Object s: queue) {
             String s1 = (String) s;
             System.out.println(s1);
@@ -125,6 +163,49 @@ class ViewingStand {
 // Question 2
 ////////////////////////////////////////////
 
+class CircularQueueConsumer extends Thread {
+    private CircularQueue<String> queue;
+    private int index;
+
+    CircularQueueConsumer(int index, CircularQueue<String> queue) {
+        this.queue = queue;
+        this.index = index;
+    }
+
+    public void run() {
+        System.out.println("Circular customer " + index + " run");
+        for(int i = 0; i < 10; i++) {
+            if(queue.full()) {
+                System.out.println("Consumer " + index + " can't add string, queue full");
+            } else {
+                queue.join("Consumer " + index + " adding string " + i);
+            }
+        }
+    }
+}
+
+class CircularQueueRemoveConsumer extends Thread {
+    private CircularQueue<String> queue;
+    private int index;
+
+    CircularQueueRemoveConsumer(int index, CircularQueue<String> queue) {
+        this.queue = queue;
+        this.index = index;
+    }
+
+    public void run() {
+        System.out.println("Circular remove customer " + index + " run");
+        for(int i = 0; i < 10; i++) {
+            if(!queue.empty()) {
+                queue.leave();
+                System.out.println("Consumer " + index + " removing string ");
+            } else {
+                System.out.println("Consumer " + index + " cant remove string, queue empty ");
+            }
+        }
+    }
+}
+
 class CircularQueue<T> implements Iterable<T> {
     private AtomicReferenceArray<T> queue;
     private AtomicInteger head, tail, size;
@@ -148,11 +229,20 @@ class CircularQueue<T> implements Iterable<T> {
 
     public boolean join(T x) {
         if (size.get() < max) {
-            queue.set(tail.get(), x);
-            tail.set((tail.get() + 1) % max);
-            size.incrementAndGet();
+            setAndIncreaseCounters(x);
             return true;
         } else return false;
+    }
+
+    private synchronized void setAndIncreaseCounters(T x) {
+        queue.set(tail.get(), x);
+        tail.set((tail.get() + 1) % max);
+        size.incrementAndGet();
+    }
+
+    private synchronized void setAndDecreaseCounters() {
+        head.set((head.get() + 1) % max);
+        size.decrementAndGet();
     }
 
     public T top() {
@@ -165,8 +255,7 @@ class CircularQueue<T> implements Iterable<T> {
     public boolean leave() {
         if (size.get() == 0) return false;
         else {
-            head.set((head.get() + 1) % max);
-            size.decrementAndGet();
+            setAndDecreaseCounters();
             return true;
         }
     }
