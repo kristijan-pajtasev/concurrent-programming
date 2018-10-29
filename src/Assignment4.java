@@ -178,7 +178,9 @@ class CircularQueueConsumer extends Thread {
             if(queue.full()) {
                 System.out.println("Consumer " + index + " can't add string, queue full");
             } else {
-                queue.join("Consumer " + index + " adding string " + i);
+                String s = "Consumer " + index + " adding string " + i;
+                System.out.println("STRING ADDED: " + s);
+                queue.join(s);
             }
         }
     }
@@ -211,7 +213,7 @@ class CircularQueue<T> implements Iterable<T> {
     private AtomicInteger head, tail, size;
     private int max;
 
-    public CircularQueue() {
+    CircularQueue() {
         max = 20;
         queue = new AtomicReferenceArray(max);
         head = new AtomicInteger(0);
@@ -227,7 +229,7 @@ class CircularQueue<T> implements Iterable<T> {
         size = new AtomicInteger(0);
     }
 
-    public boolean join(T x) {
+    boolean join(T x) {
         if (size.get() < max) {
             setAndIncreaseCounters(x);
             return true;
