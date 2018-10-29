@@ -1,11 +1,13 @@
-import com.sun.glass.ui.View;
+import sun.nio.ch.ThreadPool;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 
 /**
  * Assignment4.java
@@ -19,20 +21,41 @@ public class Assignment4 {
         // Question 1 test
         ////////////////////////////////////////////
         System.out.println("QUESTION 1 \n========================");
-        final int NUM_OF_SEATS = 5;
+        final int NUM_OF_SEATS = 1; // TODO fix num of seats and num of customers
+        final int NUM_OF_CUSTOMERS = 1;
         ViewingStand viewingStand = new ViewingStand(NUM_OF_SEATS);
-
-        for (int i = 0; i < 30; i++) {
+        Customer[] customers = new Customer[NUM_OF_CUSTOMERS];
+        for (int i = 0; i < NUM_OF_CUSTOMERS; i++) {
             Customer customer = new Customer(viewingStand, i);
+            customers[i] = customer;
             customer.start();
         }
+
+        // wait for all before proceeding to next questions
+        for (int i = 0; i < NUM_OF_CUSTOMERS; i++) {
+            try {
+                customers[i].join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // TODO handle wait for all
 
         System.out.println("\n\n\n");
 
         ////////////////////////////////////////////
         // Question 2 test
         ////////////////////////////////////////////
-        System.out.println("QUESTION 1 \n ========================");
+        System.out.println("QUESTION 2 \n========================");
+
+        CircularQueue queue = new CircularQueue<String>();
+        queue.join("New string");
+        queue.join("One more string");
+        for(Object s: queue) {
+            String s1 = (String) s;
+            System.out.println(s1);
+        }
     }
 }
 
@@ -99,83 +122,89 @@ class ViewingStand {
 }
 
 ////////////////////////////////////////////
-// Question 1 test
+// Question 2
 ////////////////////////////////////////////
+
 class CircularQueue<T> implements Iterable<T> {
-    private T queue[];
-    private int head, tail, size;
+    private AtomicReferenceArray<T> queue;
+    private AtomicInteger head, tail, size;
+    private int max;
 
     public CircularQueue() {
-        queue = (T[]) new Object[20];
-        head = 0;
-        tail = 0;
-        size = 0;
+        max = 20;
+        queue = new AtomicReferenceArray(max);
+        head = new AtomicInteger(0);
+        tail = new AtomicInteger(0);
+        size = new AtomicInteger(0);
     }
 
     public CircularQueue(int n) { //assume n >=0
-        queue = (T[]) new Object[n];
-        size = 0;
-        head = 0;
-        tail = 0;
+        max = n;
+        queue = new AtomicReferenceArray(max);
+        head = new AtomicInteger(0);
+        tail = new AtomicInteger(0);
+        size = new AtomicInteger(0);
     }
 
     public boolean join(T x) {
-        if (size < queue.length) {
-            queue[tail] = x;
-            tail = (tail + 1) % queue.length;
-            size++;
+        if (size.get() < max) {
+            queue.set(tail.get(), x);
+            tail.set((tail.get() + 1) % max);
+            size.incrementAndGet();
             return true;
         } else return false;
     }
 
     public T top() {
-        if (size > 0)
-            return queue[head];
+        if (size.get() > 0)
+            return queue.get(head.get());
         else
             return null;
     }
 
     public boolean leave() {
-        if (size == 0) return false;
+        if (size.get() == 0) return false;
         else {
-            head = (head + 1) % queue.length;
-            size--;
+            head.set((head.get() + 1) % max);
+            size.decrementAndGet();
             return true;
         }
     }
 
     public boolean full() {
-        return (size == queue.length);
+        return (size.get() == max);
     }
 
     public boolean empty() {
-        return (size == 0);
+        return (size.get() == 0);
     }
 
     public Iterator<T> iterator() {
-        return new QIterator<T>(queue, head, size);
+        return new QIterator<T>(queue, head, size, max);
     }
 
     private static class QIterator<T> implements Iterator<T> {
-        private T[] d;
-        private int index;
-        private int size;
+        private AtomicReferenceArray<T> d;
+        private AtomicInteger index;
+        private AtomicInteger size;
+        private int max;
         private int returned = 0;
 
-        QIterator(T[] dd, int head, int s) {
+        QIterator(AtomicReferenceArray<T> dd, AtomicInteger head, AtomicInteger s, int m) {
             d = dd;
             index = head;
             size = s;
+            max = m;
         }
 
         public boolean hasNext() {
-            return returned < size;
+            return returned < size.get();
         }
 
         public T next() {
-            if (returned == size) throw new NoSuchElementException();
-            T item = (T) d[index];
-            index = (index + 1) % d.length;
+            if (returned == size.get()) throw new NoSuchElementException();
+            T item = d.get(index.get());
+            index.set((index.get() + 1) % max);
             returned++;
             return item;
         }
