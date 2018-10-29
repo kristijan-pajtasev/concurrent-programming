@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Assignment4.java
@@ -104,7 +105,6 @@ class CircularQueue<T> implements Iterable<T> {
     private T queue[];
     private int head, tail, size;
 
-    @SuppressWarnings("unchecked")
     public CircularQueue() {
         queue = (T[]) new Object[20];
         head = 0;
@@ -112,7 +112,6 @@ class CircularQueue<T> implements Iterable<T> {
         size = 0;
     }
 
-    @SuppressWarnings("unchecked")
     public CircularQueue(int n) { //assume n >=0
         queue = (T[]) new Object[n];
         size = 0;
