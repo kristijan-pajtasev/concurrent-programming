@@ -48,13 +48,13 @@ public class Assignment4 {
 
         // intentionally more elements than queue size
         CircularQueueConsumer[] consumers = new CircularQueueConsumer[3];
-        for(int i = 0; i < 3; i++) {
+        for (int i = 0; i < 3; i++) {
             CircularQueueConsumer consumer = new CircularQueueConsumer(i, queue);
             consumers[i] = consumer;
             consumer.start();
         }
 
-        for(int i = 0; i < 3; i++) {
+        for (int i = 0; i < 3; i++) {
             try {
                 consumers[i].join();
             } catch (InterruptedException e) {
@@ -64,7 +64,7 @@ public class Assignment4 {
 
         System.out.println("\n\nResulted array:");
 
-        for(Object s: queue) {
+        for (Object s : queue) {
             String s1 = (String) s;
             System.out.println(s1);
         }
@@ -74,13 +74,13 @@ public class Assignment4 {
 
         // intentionally more elements than queue size
         CircularQueueRemoveConsumer[] removeConsumers = new CircularQueueRemoveConsumer[3];
-        for(int i = 0; i < 3; i++) {
+        for (int i = 0; i < 3; i++) {
             CircularQueueRemoveConsumer consumer = new CircularQueueRemoveConsumer(i, queue);
             removeConsumers[i] = consumer;
             consumer.start();
         }
 
-        for(int i = 0; i < 3; i++) {
+        for (int i = 0; i < 3; i++) {
             try {
                 removeConsumers[i].join();
             } catch (InterruptedException e) {
@@ -90,7 +90,7 @@ public class Assignment4 {
 
         System.out.println("\n\nResulted array:");
 
-        for(Object s: queue) {
+        for (Object s : queue) {
             String s1 = (String) s;
             System.out.println(s1);
         }
@@ -174,14 +174,9 @@ class CircularQueueConsumer extends Thread {
 
     public void run() {
         System.out.println("Circular customer " + index + " run");
-        for(int i = 0; i < 10; i++) {
-            if(queue.full()) {
-                System.out.println("Consumer " + index + " can't add string, queue full");
-            } else {
-                String s = "Consumer " + index + " adding string " + i;
-                System.out.println("STRING ADDED: " + s);
-                queue.join(s);
-            }
+        for (int i = 0; i < 10; i++) {
+            String s = "Consumer " + index + " adding string " + i;
+            queue.join(s);
         }
     }
 }
@@ -197,25 +192,20 @@ class CircularQueueRemoveConsumer extends Thread {
 
     public void run() {
         System.out.println("Circular remove customer " + index + " run");
-        for(int i = 0; i < 10; i++) {
-            if(!queue.empty()) {
-                queue.leave();
-                System.out.println("Consumer " + index + " removing string ");
-            } else {
-                System.out.println("Consumer " + index + " cant remove string, queue empty ");
-            }
+        for (int i = 0; i < 10; i++) {
+            queue.leave();
         }
     }
 }
 
 class CircularQueue<T> implements Iterable<T> {
-    private AtomicReferenceArray<T> queue;
+    private T queue[];
     private AtomicInteger head, tail, size;
     private int max;
 
     CircularQueue() {
         max = 20;
-        queue = new AtomicReferenceArray(max);
+        queue = (T[]) new Object[max];
         head = new AtomicInteger(0);
         tail = new AtomicInteger(0);
         size = new AtomicInteger(0);
@@ -223,50 +213,52 @@ class CircularQueue<T> implements Iterable<T> {
 
     public CircularQueue(int n) { //assume n >=0
         max = n;
-        queue = new AtomicReferenceArray(max);
+        queue = (T[]) new Object[max];
         head = new AtomicInteger(0);
         tail = new AtomicInteger(0);
         size = new AtomicInteger(0);
     }
 
-    boolean join(T x) {
-        if (size.get() < max) {
+    synchronized boolean join(T x) {
+        if (!full()) {
             setAndIncreaseCounters(x);
             return true;
         } else return false;
     }
 
-    private synchronized void setAndIncreaseCounters(T x) {
-        queue.set(tail.get(), x);
-        tail.set((tail.get() + 1) % max);
-        size.incrementAndGet();
-    }
-
-    private synchronized void setAndDecreaseCounters() {
-        head.set((head.get() + 1) % max);
-        size.decrementAndGet();
-    }
-
     public T top() {
         if (size.get() > 0)
-            return queue.get(head.get());
+            return queue[head.get()];
         else
             return null;
     }
 
-    boolean leave() {
-        if (size.get() == 0) return false;
+    synchronized boolean leave() {
+        if (empty()) return false;
         else {
             setAndDecreaseCounters();
             return true;
         }
     }
 
+    private void setAndIncreaseCounters(T x) {
+        System.out.println(x.toString());
+        queue[tail.get()] = x;
+        tail.set((tail.get() + 1) % max);
+        size.incrementAndGet();
+    }
+
+    private void setAndDecreaseCounters() {
+        System.out.println("Item removed from queue");
+        head.set((head.get() + 1) % max);
+        size.decrementAndGet();
+    }
+
     boolean full() {
         return (size.get() == max);
     }
 
-    public boolean empty() {
+    boolean empty() {
         return (size.get() == 0);
     }
 
@@ -275,13 +267,13 @@ class CircularQueue<T> implements Iterable<T> {
     }
 
     private static class QIterator<T> implements Iterator<T> {
-        private AtomicReferenceArray<T> d;
+        private T[] d;
         private AtomicInteger index;
         private AtomicInteger size;
         private int max;
         private int returned = 0;
 
-        QIterator(AtomicReferenceArray<T> dd, AtomicInteger head, AtomicInteger s, int m) {
+        QIterator(T[] dd, AtomicInteger head, AtomicInteger s, int m) {
             d = dd;
             index = head;
             size = s;
@@ -294,7 +286,7 @@ class CircularQueue<T> implements Iterable<T> {
 
         public T next() {
             if (returned == size.get()) throw new NoSuchElementException();
-            T item = d.get(index.get());
+            T item = d[index.get()];
             index.set((index.get() + 1) % max);
             returned++;
             return item;
