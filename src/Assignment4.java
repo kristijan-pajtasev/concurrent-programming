@@ -8,46 +8,58 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 
 /**
  * Assignment4.java
- * <p>
  * Student Name: Kristijan Pajtasev
  * Student Number: 2920266
  */
 
 public class Assignment4 {
     public static void main(String args[]) {
+        ////////////////////////////////////////////
+        // Question 1 test
+        ////////////////////////////////////////////
+        System.out.println("QUESTION 1 \n========================");
         final int NUM_OF_SEATS = 5;
         ViewingStand viewingStand = new ViewingStand(NUM_OF_SEATS);
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 30; i++) {
             Customer customer = new Customer(viewingStand, i);
             customer.start();
         }
+
+        System.out.println("\n\n\n");
+
+        ////////////////////////////////////////////
+        // Question 2 test
+        ////////////////////////////////////////////
+        System.out.println("QUESTION 1 \n ========================");
     }
 }
 
 
 class Customer extends Thread {
-    ViewingStand viewingStand;
-    int seatNumber, customerId;
+    private ViewingStand viewingStand;
+    private int customerId;
 
-    public Customer(ViewingStand viewingStand, int customerId) {
+    Customer(ViewingStand viewingStand, int customerId) {
         this.viewingStand = viewingStand;
         this.customerId = customerId;
     }
 
     public void run() {
+        System.out.println("Customer " + customerId + " requesting seat.");
+        int seatNumber;
+
         do {
             seatNumber = viewingStand.findSeat();
-            System.out.println("Customer " + customerId + " requesting seat");
 
             if (seatNumber > -1) {
-                int time = (int) (Math.random() * 10) * 1000;
-                System.out.println("Customer " + customerId + " requesting seat " +
-                        seatNumber + " for " + time + "ms");
+                int time = (int) (Math.random() * 10);
+                System.out.println("Customer " + customerId + " taking seat " + seatNumber + " for " + time + "s");
+
                 try {
-                    Thread.sleep(time); // TODO, why not sleep
+                    Thread.sleep(time * 1000);
                     viewingStand.leaveSeat(seatNumber);
-                    System.out.println("Customer " + customerId + " releasing seat ");
+                    System.out.println("Customer " + customerId + " leaving seat ");
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -57,42 +69,37 @@ class Customer extends Thread {
 
 }
 
+////////////////////////////////////////////
+// Question 1
+////////////////////////////////////////////
 class ViewingStand {
-    private Semaphore stand;
-    ArrayList<Boolean> seats;
-    AtomicIntegerArray arr;
+    private int length;
+    private AtomicIntegerArray seats;
 
-    public ViewingStand(int max) {
-        stand = new Semaphore(max);
-        seats = new ArrayList<>();
-        arr = new AtomicIntegerArray(max);
-        for (int i = 0; i < max; i++) seats.add(false);
+    ViewingStand(int length) {
+        this.length = length;
+        seats = new AtomicIntegerArray(length);
+        for (int i = 0; i < length; i++) seats.set(i, 0);
     }
 
-    public int findSeat() {
-        int freeSeat = seats.indexOf(false);
-        try {
-            if (freeSeat > 0) {
-                seats.add(freeSeat, true);
-                stand.acquire();
+    int findSeat() {
+        for (int i = 0; i < length; i++) {
+            boolean availableSeat = seats.compareAndSet(i, 0, 1);
+            if (availableSeat) {
+                return i;
             }
-
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } finally {
-            return freeSeat;
         }
+        return -1;
     }
 
-    private synchronized int freeSeat() {
-        return 0;
-    }
-
-    public void leaveSeat(int seat) {
-        seats.set(seat, false);
+    void leaveSeat(int seat) {
+        seats.set(seat, 0);
     }
 }
 
+////////////////////////////////////////////
+// Question 1 test
+////////////////////////////////////////////
 class CircularQueue<T> implements Iterable<T> {
     private T queue[];
     private int head, tail, size;
