@@ -36,7 +36,7 @@ public class Assignment5 {
         Thread[] threads = new Thread[5];
 
         for (int i = 0; i < 5; i++) {
-            Thread thread = new AddPoints(points);
+            Thread thread = new AddPoints(points, i);
             threads[i] = thread;
             thread.start();
         }
@@ -73,11 +73,13 @@ public class Assignment5 {
 }
 
 class AddPoints extends Thread {
-    private CollectionPoint points;
     private int NUM_OF_POINTS_TO_GENERATE = 10000;
+    private int index;
+    private CollectionPoint points;
 
-    AddPoints(CollectionPoint points) {
+    AddPoints(CollectionPoint points, int index) {
         this.points = points;
+        this.index = index;
     }
 
     /**
@@ -89,9 +91,11 @@ class AddPoints extends Thread {
 
     @Override
     public void run() {
+        System.out.println("AddPoint thread " + index + " started.");
         for (int i = 0; i < NUM_OF_POINTS_TO_GENERATE; i++) {
             points.add(new Point(getRandom(), getRandom()));
         }
+        System.out.println("AddPoint thread " + index + " ended.");
     }
 }
 
