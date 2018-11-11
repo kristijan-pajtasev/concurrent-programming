@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Exchanger;
 import java.util.concurrent.Semaphore;
@@ -42,7 +43,7 @@ public class Assignment5 {
             for (int i = 0; i < NUMBER_OF_THREADS; i++) {
                 threads[i].join();
             }
-            System.out.println("================================= \nQuestion 1: ");
+            System.out.println("================================= \nQuestion 1: \n");
             System.out.println(points.toString());
             System.out.println("Number of points generated: " + points.size());
 
@@ -65,6 +66,7 @@ public class Assignment5 {
     }
 
     static void questionTwoTest() {
+        System.out.println("\n\n\n================================= \nQuestion 2: \n");
         int NUMBER_OF_THREADS = 5;
         final int MAX_PERMITS = 1;
         Thread[] threads = new QuestionTwoThread[NUMBER_OF_THREADS];
@@ -86,7 +88,8 @@ public class Assignment5 {
     }
 
     static void questionThreeTest() {
-        Exchanger<ArrayList<Integer>> exchanger = new Exchanger<>();
+        System.out.println("\n\n\n================================= \nQuestion 3: \n");
+        Exchanger<ArrayList<String>> exchanger = new Exchanger<>();
         ExchangerProducer producer = new ExchangerProducer(exchanger);
         ExchangerConsumer consumer = new ExchangerConsumer(exchanger);
         producer.start();
@@ -205,7 +208,7 @@ class QuestionTwoThread extends Thread {
 
     @Override
     public void run() {
-        int timeToSleep = (int) (Math.random() * 10 * 1000);
+        int timeToSleep = (int) (Math.random() * 2 * 1000);
         System.out.println("Thread " + threadIndex + " started work for " + timeToSleep + "ms.");
         try {
             sleep(timeToSleep);
@@ -223,10 +226,10 @@ class QuestionTwoThread extends Thread {
 //Q3 ===========================================================
 
 class ExchangerProducer extends Thread {
-    private Exchanger<ArrayList<Integer>> exchanger;
-    private ArrayList<Integer> buffer = new ArrayList<Integer>();
+    private Exchanger<ArrayList<String>> exchanger;
+    private ArrayList<String> buffer = new ArrayList<String>();
 
-    public ExchangerProducer(Exchanger<ArrayList<Integer>> exchanger) {
+    public ExchangerProducer(Exchanger<ArrayList<String>> exchanger) {
         this.exchanger = exchanger;
     }
 
@@ -245,17 +248,16 @@ class ExchangerProducer extends Thread {
     }
 
     public void fillBuffer() {
-        for (int i = 0; i <= 3; i++) {
-            buffer.add(i);
-        }
+        String[] words = {"one", "two", "three", "four", "five", "six"};
+        buffer.addAll(Arrays.asList(words));
     }
 }
 
 class ExchangerConsumer extends Thread {
-    private Exchanger<ArrayList<Integer>> exchanger;
-    private ArrayList<Integer> buffer = new ArrayList<Integer>();
+    private Exchanger<ArrayList<String>> exchanger;
+    private ArrayList<String> buffer = new ArrayList<String>();
 
-    public ExchangerConsumer(Exchanger<ArrayList<Integer>> exchanger) {
+    public ExchangerConsumer(Exchanger<ArrayList<String>> exchanger) {
         this.exchanger = exchanger;
     }
 
