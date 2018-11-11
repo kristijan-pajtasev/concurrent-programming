@@ -1,8 +1,5 @@
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Assignment5.java
@@ -15,12 +12,11 @@ public class Assignment5 {
         //Question 1
         //===============================================
         questionOneTest();
-
+        //===============================================
 
         //Question 2
         //==============================================
-
-
+        questionTwoTest();
         //===============================================
 
         //Question 3
@@ -33,14 +29,13 @@ public class Assignment5 {
     static void questionOneTest() {
         final int NUMBER_OF_THREADS = 5;
         CollectionPoint points = new CollectionPoint();
-        Thread[] threads = new Thread[5];
+        Thread[] threads = new Thread[NUMBER_OF_THREADS];
 
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < NUMBER_OF_THREADS; i++) {
             Thread thread = new AddPoints(points, i);
             threads[i] = thread;
             thread.start();
         }
-
 
         try {
             for (int i = 0; i < NUMBER_OF_THREADS; i++) {
@@ -63,12 +58,26 @@ public class Assignment5 {
             System.out.println("Collection contains (-2, -2): " + points.search(new Point(-2, -2)));
 
 
-
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
 
+    static void questionTwoTest() {
+        int NUMBER_OF_THREADS = 5;
+        Thread[] threads = new QuestionTwoThread[NUMBER_OF_THREADS];
 
+        for (int i = 0; i < NUMBER_OF_THREADS; i++) {
+            Thread thread = new QuestionTwoThread(i);
+            threads[i] = thread;
+            thread.start();
+        }
+
+        try {
+            for (Thread thread: threads) {
+                thread.join();
+            }
+        } catch (InterruptedException e) { e.printStackTrace(); }
     }
 }
 
@@ -113,8 +122,8 @@ class CollectionPoint {
 
     synchronized List<Point> getAllX(int x) {
         List<Point> foundPoints = new ArrayList<>();
-        for(Point point : points)
-            if(point.x() == x)  {
+        for (Point point : points)
+            if (point.x() == x) {
                 foundPoints.add(point);
             }
         return foundPoints;
@@ -165,11 +174,28 @@ final class Point {
 //End Q1 =======================================================
 
 
-
 //Q2 ===========================================================
 
-//End Q2 =======================================================
+class QuestionTwoThread extends Thread {
+    private int threadIndex;
 
+    public QuestionTwoThread(int threadIndex) {
+        this.threadIndex = threadIndex;
+    }
+
+    @Override
+    public void run() {
+        System.out.println("Thread " + threadIndex + "started.");
+        try {
+            sleep((int) (Math.random() * 10 * 1000));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println("Thread " + threadIndex + "ended.");
+    }
+}
+
+//End Q2 =======================================================
 
 
 //Q3 ===========================================================
