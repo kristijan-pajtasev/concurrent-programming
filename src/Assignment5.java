@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 
 /**
  * Assignment5.java
@@ -65,19 +66,23 @@ public class Assignment5 {
 
     static void questionTwoTest() {
         int NUMBER_OF_THREADS = 5;
+        final int MAX_PERMITS = 1;
         Thread[] threads = new QuestionTwoThread[NUMBER_OF_THREADS];
+        Semaphore semaphore = new Semaphore(MAX_PERMITS);
 
         for (int i = 0; i < NUMBER_OF_THREADS; i++) {
-            Thread thread = new QuestionTwoThread(i);
+            Thread thread = new QuestionTwoThread(i, semaphore);
             threads[i] = thread;
             thread.start();
         }
 
         try {
-            for (Thread thread: threads) {
+            for (Thread thread : threads) {
                 thread.join();
             }
-        } catch (InterruptedException e) { e.printStackTrace(); }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }
 
@@ -178,20 +183,29 @@ final class Point {
 
 class QuestionTwoThread extends Thread {
     private int threadIndex;
+    private Semaphore semaphore;
 
-    public QuestionTwoThread(int threadIndex) {
+    QuestionTwoThread(int threadIndex, Semaphore semaphore) {
         this.threadIndex = threadIndex;
+        this.semaphore = semaphore;
+        try {
+            semaphore.acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void run() {
-        System.out.println("Thread " + threadIndex + "started.");
+        int timeToSleep = (int) (Math.random() * 10 * 1000);
+        System.out.println("Thread " + threadIndex + " started work for " + timeToSleep + "ms.");
         try {
-            sleep((int) (Math.random() * 10 * 1000));
+            sleep(timeToSleep);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        System.out.println("Thread " + threadIndex + "ended.");
+        System.out.println("Thread " + threadIndex + " ended.");
+        semaphore.release();
     }
 }
 
